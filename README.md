@@ -2,6 +2,7 @@ pydefjump
 =========
 
 A fast python function and class definition locating plugin in emacs.
+https://github.com/justdoit0823/pydefjump.git
 
 
 Requirements

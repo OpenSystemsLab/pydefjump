@@ -1,6 +1,6 @@
 
 # -*- coding: utf-8 -*-
-
+import pdb
 import ast
 from collections import deque
 import tokenize
@@ -31,6 +31,7 @@ def get_file_def_pos(filename, keyword=None):
 
     if filename not in file_def_cache:
         # 没命中缓存
+        # No hit cache
         def_map = refresh_file_def_pos(filename)
     else:
         def_map = file_def_cache[filename]
@@ -60,6 +61,7 @@ def iter_def_list(def_list, token_map, rootclass=None):
 
         if def_type == 'class':
             # 类中定义
+            # Class definition
             if rootclass is None:
                 down_rootclass = d[1]
             else:
@@ -76,9 +78,11 @@ def echo(*args):
 def parse_def_node(node):
     if isinstance(node, _func_def_types):
         # 函数节点
+        # function node
         return ('function', node.name, node.lineno, node.col_offset)
     elif isinstance(node, ast.ClassDef):
         # 类节点
+        # class node
         children_list = []
         for n in node.body:
             def_list = parse_def_node(n)
@@ -110,6 +114,7 @@ def get_file_def_token(filename):
 
         if token_type == tokenize.INDENT:
             # 缩进
+            # indentation
             if function_name:
                 indent_token = 'def'
             elif class_name:
@@ -121,51 +126,62 @@ def get_file_def_token(filename):
 
         elif token_type == tokenize.DEDENT:
             # 退出缩进
+            # exit indent
             if not indent_queue:
                 continue
 
             d = indent_queue.pop()
             if d[0] == 'def':
                 # 退出函数缩进
+                # exit function indent
                 if indent_queue:
                     function_name = indent_queue[-1][2]
                 else:
                     function_name = None
             elif d[0] == 'class':
                 # 退出类缩进
+                # exit class indent
                 if indent_queue:
                     class_name = indent_queue[-1][1]
                 else:
                     class_name = None
         else:
             # 定义
+            # definition
             if token_str in check_name:
                 def_token = token_str
                 if function_name:
                     if not indent_queue or function_name != indent_queue[-1][-1]:
                         # 处理单行函数定义
+                        # Handling ingle line function definition
                         function_name = None
                     else:
                         # 忽略函数内部定义的类和函数
+                        # Ignore classes and functions defined inside the function
                         def_token = None
                 elif class_name:
                     if not indent_queue or class_name != indent_queue[-1][1]:
                         # 处理单行类定义
+                        # Handling single-line class definitions
                         class_name = None
             elif def_token:
                 if def_token == 'def':
                     # 定义函数
+                    # Defining function
                     function_name = token_str
                     if class_name is None:
                         # 模块顶级函数
+                        # Module top level function
                         token_map[function_name] = start
                     else:
                         # 类函数
+                        # Class function
                         full_function_name = class_name + '.' + function_name
                         token_map[full_function_name] = start
                 elif def_token == 'class':
                     if class_name is None or not indent_queue:
                         # 新定义一个类
+                        # Define a new class
                         class_name = token_str
                     elif indent_queue:
                         class_name = class_name + '.' + token_str
